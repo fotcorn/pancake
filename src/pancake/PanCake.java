@@ -1,38 +1,14 @@
 package pancake;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class PanCake {
+
     public static void main(String[] args) {
-        List<Integer> input = Arrays.asList(2, 4, 1, 3);
-        System.out.printf("Is input valid: %s", PanCake.validateInput(input));
-    }
-
-    public static boolean validateInput(List<Integer> input) {
-        ArrayList<Integer> sortedInput = new ArrayList<>(input);
-        Collections.sort(sortedInput);
-
-        for (int i = 0; i < sortedInput.size(); i++) {
-            if (sortedInput.get(i) != i + 1) {
-                return false;
-            }
+        List<Integer> input = Arrays.asList(2, 1, 3);
+        if (!Utils.validateInput(input)) {
+            throw new RuntimeException("Invalid input!");
         }
-        return true;
-    }
-
-    protected static int gapHeuristic(List<Integer> input) {
-        int gap = 0;
-        for (int i = 0; i < input.size() - 1; i++) {
-            if (Math.abs(input.get(i) - input.get(i + 1)) != 1) {
-                gap++;
-            }
-        }
-        if (input.get(input.size() - 1) != input.size()) {
-            gap++;
-        }
-        return gap;
     }
 }
