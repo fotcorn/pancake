@@ -8,10 +8,25 @@ import java.util.Collections;
 public class PanCakeRecursive {
 
     public static void main(String[] args) {
-        int[] input = {2, 1, 3};
+        int size = 4;
+
+        ArrayList<Integer> listInput = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            listInput.add(i + 1);
+        }
+
+        Collections.shuffle(listInput);
+
+        int[] input = new int[listInput.size()];
+        for(int i = 0; i < listInput.size(); i++) {
+            input[i] = listInput.get(i);
+        }
+
         if (!Utils.validateInput(input)) {
             throw new RuntimeException("Invalid input!");
         }
+
+        System.out.printf("Searching for solution with input: %s\n", listInput);
 
         ArrayList<Integer> solution = startSearch(input);
 
