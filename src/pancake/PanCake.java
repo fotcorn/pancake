@@ -22,4 +22,17 @@ public class PanCake {
         }
         return true;
     }
+
+    protected static int gapHeuristic(List<Integer> input) {
+        int gap = 0;
+        for (int i = 0; i < input.size() - 1; i++) {
+            if (Math.abs(input.get(i) - input.get(i + 1)) != 1) {
+                gap++;
+            }
+        }
+        if (input.get(input.size() - 1) != input.size()) {
+            gap++;
+        }
+        return gap;
+    }
 }
