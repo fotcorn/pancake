@@ -2,6 +2,9 @@ package pancake;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import static org.junit.Assert.*;
 
 public class UtilsTest {
@@ -20,13 +23,13 @@ public class UtilsTest {
 
     @Test
     public void testValidateSolution() {
-        assertTrue(Utils.validateSolution(new int[]{2, 1}, new int[]{0}));
+        assertTrue(Utils.validateSolution(new int[]{2, 1}, Collections.singletonList(0)));
 
-        assertTrue(Utils.validateSolution(new int[]{1, 3, 2}, new int[]{0, 1, 0}));
-        assertTrue(Utils.validateSolution(new int[]{2, 1, 3}, new int[]{0}));
-        assertTrue(Utils.validateSolution(new int[]{2, 3, 1}, new int[]{0, 1}));
-        assertTrue(Utils.validateSolution(new int[]{3, 1, 2}, new int[]{1, 0}));
-        assertTrue(Utils.validateSolution(new int[]{3, 2, 1}, new int[]{1}));
+        assertTrue(Utils.validateSolution(new int[]{1, 3, 2}, Arrays.asList(0, 1, 0)));
+        assertTrue(Utils.validateSolution(new int[]{2, 1, 3}, Collections.singletonList(0)));
+        assertTrue(Utils.validateSolution(new int[]{2, 3, 1}, Arrays.asList(0, 1)));
+        assertTrue(Utils.validateSolution(new int[]{3, 1, 2}, Arrays.asList(1, 0)));
+        assertTrue(Utils.validateSolution(new int[]{3, 2, 1}, Collections.singletonList(1)));
     }
 
     @Test
@@ -42,8 +45,8 @@ public class UtilsTest {
         assertEquals(Utils.gapHeuristic(new int[]{3, 2, 1}), 1);
     }
 
-    private static void assertFlip(int[] input, int action, int[] expectedOutput) {
-        Utils.flip(input, action);
+    private static void assertFlip(int[] input, int operation, int[] expectedOutput) {
+        Utils.flip(input, operation);
         assertArrayEquals(input, expectedOutput);
     }
 

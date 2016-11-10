@@ -1,6 +1,8 @@
 package pancake;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Utils {
     public static boolean validateInput(int[] input) {
@@ -14,12 +16,16 @@ public class Utils {
         return true;
     }
 
-    public static boolean validateSolution(int[] originalInput, int[] solution) {
+    public static boolean validateSolution(int[] originalInput, List<Integer> solution) {
         int[] input = Arrays.copyOf(originalInput, originalInput.length);
 
-        for (int action : solution) {
-            flip(input, action);
+        for (int operation : solution) {
+            flip(input, operation);
         }
+        return isCorrect(input);
+    }
+
+    public static boolean isCorrect(int[] input) {
         for (int i = 0; i < input.length; i ++) {
             if (input[i] != i + 1) {
                 return false;
