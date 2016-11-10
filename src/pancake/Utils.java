@@ -1,7 +1,6 @@
 package pancake;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,6 +15,29 @@ public class Utils {
             }
         }
         return true;
+    }
+
+    public static boolean validateSolution(List<Integer> originalInput, List<Integer> solution) {
+        ArrayList<Integer> input = new ArrayList<>(originalInput);
+
+        for (int action : solution) {
+            flip(input, action);
+        }
+        for (int i = 0; i < input.size(); i ++) {
+            if (input.get(i) != i + 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void flip(List<Integer> input, int position) {
+        int to = position + 2;
+        for(int i = 0; i < to / 2; i++) {
+            int temp = input.get(i);
+            input.set(i, input.get(to - i - 1));
+            input.set(to - i - 1, temp);
+        }
     }
 
     public static int gapHeuristic(List<Integer> input) {
