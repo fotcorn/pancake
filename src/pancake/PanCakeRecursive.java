@@ -44,6 +44,7 @@ public class PanCakeRecursive {
             }
             maxDepth++;
         }
+        Collections.reverse(solution);
         return solution;
     }
 
@@ -61,12 +62,10 @@ public class PanCakeRecursive {
                             solution.add(currentOperation);
                         }
                         return solution;
-                    } else {
-                        return null;
                     }
                 }
             }
         }
-        throw new RuntimeException("Something is wrong with the algorithm.");
+        return null;
     }
 }
