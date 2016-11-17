@@ -38,7 +38,7 @@ public class PanCakeRecursive {
         int maxDepth = Utils.gapHeuristic(input);
         ArrayList<Integer> solution;
         while (true) {
-            solution = search(input, -1, maxDepth);
+            solution = search(input, -1, 0, maxDepth);
             if (solution != null) {
                 break;
             }
@@ -48,7 +48,7 @@ public class PanCakeRecursive {
         return solution;
     }
 
-    public static ArrayList<Integer> search(int[] input, int lastOperation, int maxDepth) {
+    public static ArrayList<Integer> search(int[] input, int lastOperation, int currentDepth, int maxDepth) {
         for (int currentOperation = 0; currentOperation < input.length - 1; currentOperation++) {
             if (currentOperation != lastOperation) {
                 int[] newInput = Arrays.copyOf(input, input.length);
@@ -56,8 +56,8 @@ public class PanCakeRecursive {
                 if (Utils.isCorrect(newInput)) {
                     return new ArrayList<>(Collections.singletonList(currentOperation));
                 } else {
-                    if (Utils.gapHeuristic(newInput) < maxDepth) {
-                        ArrayList<Integer> solution = search(newInput, currentOperation, maxDepth);
+                    if (Utils.gapHeuristic(newInput) + currentDepth < maxDepth) {
+                        ArrayList<Integer> solution = search(newInput, currentOperation, currentDepth + 1, maxDepth);
                         if (solution != null) {
                             solution.add(currentOperation);
                         }
