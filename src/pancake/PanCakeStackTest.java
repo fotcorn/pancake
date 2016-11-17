@@ -12,6 +12,10 @@ public class PanCakeStackTest {
     private void assertAlgorithm(int[] input) {
         System.out.printf("input: %s\n", Arrays.toString(input));
         ArrayList<Integer> solution = PanCakeStack.startSearch(input);
+        ArrayList<Integer> solution2 = PanCakeRecursive.startSearch(input);
+
+        assertEquals(solution, solution2);
+
         assertTrue(Utils.validateInput(input));
         assertFalse(Utils.isCorrect(input));
         assertNotNull(solution);
@@ -36,7 +40,7 @@ public class PanCakeStackTest {
 
     @Test
     public void test1432() {
-        assertAlgorithm(new int[]{1, 4, 3, 2});
+        assertAlgorithm(new int[]{1, 2, 4, 3});
     }
 
     @Test

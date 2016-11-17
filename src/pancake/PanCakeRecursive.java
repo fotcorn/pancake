@@ -57,11 +57,11 @@ public class PanCakeRecursive {
                     return new ArrayList<>(Collections.singletonList(currentOperation));
                 } else {
                     if (Utils.gapHeuristic(newInput) + currentDepth < maxDepth) {
-                        ArrayList<Integer> solution = search(newInput, currentOperation, currentDepth + 1, maxDepth);
+                         ArrayList<Integer> solution = search(newInput, currentOperation, currentDepth + 1, maxDepth);
                         if (solution != null) {
                             solution.add(currentOperation);
+                            return solution;
                         }
-                        return solution;
                     }
                 }
             }
