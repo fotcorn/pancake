@@ -17,7 +17,6 @@ public class PanCakeStack {
             }
             maxDepth++;
         }
-        Collections.reverse(solution);
         return solution;
     }
 
@@ -53,10 +52,11 @@ public class PanCakeStack {
             }
 
             // create new stack object
-            // TODO: skip operations which undo the current operation, aka newOperation == operation
             StackObject newStackObject = new StackObject(operation);
-            for (int newOperation = input.length - 1; newOperation > 0; newOperation--) {
-                newStackObject.getStack().push(operation);
+            for (int newOperation = input.length - 2; newOperation >= 0; newOperation--) {
+                if (newOperation != operation) {
+                    newStackObject.getStack().push(newOperation);
+                }
             }
             stack.push(newStackObject);
         }

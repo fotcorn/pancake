@@ -3,19 +3,21 @@ package pancake;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class PanCakeStackTest {
 
     private void assertAlgorithm(int[] input) {
+        System.out.printf("input: %s\n", Arrays.toString(input));
         ArrayList<Integer> solution = PanCakeStack.startSearch(input);
         assertTrue(Utils.validateInput(input));
         assertFalse(Utils.isCorrect(input));
         assertNotNull(solution);
         assertTrue(Utils.validateSolution(input, solution));
+        System.out.printf("solution: %s\n", solution);
+        System.out.println();
     }
 
     @Test
@@ -30,6 +32,11 @@ public class PanCakeStackTest {
         assertAlgorithm(new int[]{2, 3, 1});
         assertAlgorithm(new int[]{3, 1, 2});
         assertAlgorithm(new int[]{3, 2, 1});
+    }
+
+    @Test
+    public void test1432() {
+        assertAlgorithm(new int[]{1, 4, 3, 2});
     }
 
     @Test
