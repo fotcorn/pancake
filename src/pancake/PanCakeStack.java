@@ -1,6 +1,7 @@
 package pancake;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Stack;
 
 public class PanCakeStack {
@@ -10,6 +11,7 @@ public class PanCakeStack {
         int maxDepth = Utils.gapHeuristic(input);
         ArrayList<Integer> solution;
         while (true) {
+            System.out.printf("----------------\nmax depth: %s\n----------------\n", maxDepth);
             solution = search(input, maxDepth);
             if (solution != null) {
                 break;
@@ -29,6 +31,8 @@ public class PanCakeStack {
         stack.push(root);
 
         while (!stack.empty()) {
+            printStack(stack);
+            // maxDepth == 3 && stack.size() == 2 && currentStackObject.getOperation() == 2
             StackObject currentStackObject = stack.peek();
             if (currentStackObject.getStack().empty()) {
                 stack.pop();
@@ -36,17 +40,23 @@ public class PanCakeStack {
             }
             int operation = currentStackObject.getStack().pop();
 
-            ArrayList<Integer> possibleSolution = new ArrayList<>(stack.size() + 1);
+            // TODO use solution stack to avoid redoing the flips every time
+            int[] newInput = Arrays.copyOf(input, input.length);
             for (int i = 1; i < stack.size(); i++) {
-                possibleSolution.add(stack.get(i).getOperation());
+                Utils.flip(newInput, stack.get(i).getOperation());
             }
-            possibleSolution.add(operation);
+            Utils.flip(newInput, operation);
 
-            if (Utils.validateSolution(input, possibleSolution)) {
-                return possibleSolution;
+            if (Utils.isCorrect(newInput)) {
+                ArrayList<Integer> solution = new ArrayList<>();
+                for (int i = 1; i < stack.size(); i++) {
+                    solution.add(stack.get(i).getOperation());
+                }
+                solution.add(operation);
+                return solution;
             }
 
-            if (Utils.gapHeuristic(possibleSolution) + stack.size() > maxDepth) {
+            if (Utils.gapHeuristic(newInput) + stack.size() > maxDepth) {
                 continue;
             }
 
@@ -60,6 +70,14 @@ public class PanCakeStack {
             stack.push(newStackObject);
         }
         return null;
+    }
+
+    private static void printStack(Stack<StackObject> stack) {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            StackObject stackObject = stack.get(i);
+            System.out.printf("%d: %s\n", stackObject.getOperation(), stackObject.getStack());
+        }
+        System.out.println();
     }
 
     private static class StackObject {
