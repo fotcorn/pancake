@@ -8,10 +8,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class PanCakeRecursiveTest {
+public class PanCakeStackTest {
 
     private void assertAlgorithm(int[] input) {
-        ArrayList<Integer> solution = PanCakeRecursive.startSearch(input);
+        ArrayList<Integer> solution = PanCakeStack.startSearch(input);
         assertTrue(Utils.validateInput(input));
         assertFalse(Utils.isCorrect(input));
         assertNotNull(solution);
