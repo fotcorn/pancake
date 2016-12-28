@@ -51,6 +51,7 @@ public class Network {
             Stack<StackObject> initialWork = PancakeNetwork.getInitialWork(input);
 
             Status status = MPI.COMM_WORLD.Recv(null, 0, 0, MPI.NULL, MPI.ANY_SOURCE, Network.I_NEED_WORK);
+            System.out.println("M: Received i need work message");
 
             MPI.COMM_WORLD.Send(new Object[]{new HereIsWorkPackage(input, initialWork, maxDepth, -1)}, 0, 1, MPI.OBJECT,
                     status.source, Network.HERE_IS_WORK);
@@ -64,28 +65,33 @@ public class Network {
             }
 
             Object[] buf = new Object[1];
-            status = MPI.COMM_WORLD.Recv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, MPI.ANY_TAG);
 
             networkLoop: while (true) {
+                status = MPI.COMM_WORLD.Recv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, MPI.ANY_TAG);
+                System.out.printf("M: received package: %d, %d", status.tag, status.source);
                 switch (status.tag) {
                     case Network.I_NEED_WORK:
                         nodesWithWork.remove(status.source);
                         if (nodesWithWork.size() == 0) {
                             MPI.COMM_WORLD.Bsend(new Object[]{new Object()}, 0, 1, MPI.OBJECT,
                                     MPI.ANY_SOURCE, Network.RESTART);
+                            System.out.printf("M: sent RESTART message to everyone");
                             break networkLoop;
                         }
                         int index = random.nextInt(nodesWithWork.size());
                         int rank = nodesWithWork.get(index);
                         MPI.COMM_WORLD.Bsend(new Integer[]{new Integer(status.source)}, 0, 1, MPI.OBJECT, rank,
                                 Network.GIVE_WORK);
+                        System.out.printf("M: sent GIVE_WORK message to %s", rank);
                         break;
                     case Network.HERE_IS_WORK:
                         HereIsWorkPackage hereIsWorkPackage = (HereIsWorkPackage) buf[0];
                         MPI.COMM_WORLD.Bsend(buf, 0, 1, MPI.OBJECT, hereIsWorkPackage.requestingNode, Network.HERE_IS_WORK);
                         nodesWithWork.add(hereIsWorkPackage.requestingNode);
+                        System.out.printf("M: sent HERE_IS_WORK message to %s", hereIsWorkPackage.requestingNode);
                         break;
                     case Network.I_HAVE_FOUND_A_SOLUTION:
+                        System.out.printf("M: %s has found a solution", status.source);
                         SolutionPackage solutionPackage = (SolutionPackage) buf[0];
                         for (int s : solutionPackage.solution) {
                             System.out.println(s);
@@ -107,12 +113,14 @@ public class Network {
         int[] input = new int[0];
         while (true) {
             Object[] buf = new Object[1];
-            Request request = MPI.COMM_WORLD.Irecv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, MPI.ANY_TAG);
+            Request request = MPI.COMM_WORLD.Irecv(buf, 0, 1, MPI.OBJECT, Network.MASTER, MPI.ANY_TAG);
             Status test = request.Test();
 
             while (test != null) {
+                System.out.printf("S: received package %d", test.tag);
                 switch (test.tag) {
                     case Network.HERE_IS_WORK:
+                        System.out.printf("");
                         if (!stack.empty()) {
                             throw new IllegalArgumentException("here is work message received with non-empty stack");
                         } else {
