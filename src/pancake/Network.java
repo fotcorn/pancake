@@ -73,7 +73,7 @@ public class Network {
                     case Network.I_NEED_WORK:
                         nodesWithWork.remove(status.source);
                         if (nodesWithWork.size() == 0) {
-                            MPI.COMM_WORLD.Bsend(new Object[]{new Object()}, 0, 1, MPI.OBJECT,
+                            MPI.COMM_WORLD.Bsend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
                                     MPI.ANY_SOURCE, Network.RESTART);
                             System.out.printf("M: sent RESTART message to everyone");
                             break networkLoop;
@@ -96,7 +96,7 @@ public class Network {
                         for (int s : solutionPackage.solution) {
                             System.out.println(s);
                         }
-                        MPI.COMM_WORLD.Bsend(new Object[]{new Object()}, 0, 1, MPI.OBJECT,
+                        MPI.COMM_WORLD.Bsend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
                                 MPI.ANY_SOURCE, Network.SOLUTION_WAS_FOUND);
                         break main_loop;
                     default:
@@ -142,7 +142,7 @@ public class Network {
             }
 
             if (stack.empty()) {
-                MPI.COMM_WORLD.Send(new Object[]{new Object()}, 0, 1, MPI.OBJECT, Network.MASTER, Network.I_NEED_WORK);
+                MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, Network.MASTER, Network.I_NEED_WORK);
             } else {
                 ArrayList<Integer> solution = PancakeNetwork.search(input, stack, maxDepth);
                 if (solution != null) {
@@ -175,4 +175,6 @@ public class Network {
             this.solution = solution;
         }
     }
+
+    private static class EmptyPackage implements Serializable {}
 }
