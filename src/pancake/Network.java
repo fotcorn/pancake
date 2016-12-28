@@ -73,8 +73,11 @@ public class Network {
                     case Network.I_NEED_WORK:
                         nodesWithWork.remove(status.source);
                         if (nodesWithWork.size() == 0) {
-                            MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
-                                    MPI.ANY_SOURCE, Network.RESTART).Wait();
+                            int size = MPI.COMM_WORLD.Size();
+                            for (int rank = 1; rank < size; rank++) {
+                                MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
+                                        rank, Network.RESTART).Wait();
+                            }
                             System.out.printf("M: sent RESTART message to everyone\n");
                             break networkLoop;
                         }
@@ -96,8 +99,12 @@ public class Network {
                         for (int s : solutionPackage.solution) {
                             System.out.println(s);
                         }
-                        MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
-                                MPI.ANY_SOURCE, Network.SOLUTION_WAS_FOUND).Wait();
+                        int size = MPI.COMM_WORLD.Size();
+                        for (int receiver = 1; receiver < size; receiver++) {
+                            MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
+                                    receiver, Network.SOLUTION_WAS_FOUND).Wait();
+                        }
+
                         break main_loop;
                     default:
                         throw new IllegalArgumentException("Master: Received illegal package type\n");
@@ -105,6 +112,10 @@ public class Network {
             }
             maxDepth++;
         }
+    }
+
+    private static Request irecv(Object[] buf) {
+        return MPI.COMM_WORLD.Irecv(buf, 0, 1, MPI.OBJECT, Network.MASTER, MPI.ANY_TAG);
     }
 
     private static boolean runSlave() {
@@ -115,12 +126,12 @@ public class Network {
 
         Object[] buf = new Object[1];
 
-        Request request = MPI.COMM_WORLD.Irecv(buf, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
+        Request request = irecv(buf);
         while (true) {
             Status status;
             if (workRequestSent) {
                 status = request.Wait();
-                request = MPI.COMM_WORLD.Irecv(buf, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
+                request = irecv(buf);
             } else {
                 status = request.Test();
             }
@@ -146,7 +157,7 @@ public class Network {
                     case Network.SOLUTION_WAS_FOUND:
                         return true;
                 }
-                request = MPI.COMM_WORLD.Irecv(buf, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
+                request = irecv(buf);
                 status = request.Test();
             }
 
