@@ -1,9 +1,10 @@
 package pancake;
 
+import java.io.Serializable;
 import java.util.Stack;
 
 
-class StackObject {
+class StackObject implements Serializable {
     int operation;
     Stack<Integer> stack;
 
