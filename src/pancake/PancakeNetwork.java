@@ -1,14 +1,27 @@
 package pancake;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Stack;
+import java.util.*;
 
 
 public class PancakeNetwork {
 
     public static int[] getInput() {
-        return new int[] {5, 2, 3, 1, 4};
+        ArrayList<Integer> input = new ArrayList<>();
+        for (int i = 1; i < 50; i++) {
+            input.add(i);
+        }
+
+        Random r = new Random(1337);
+        Collections.shuffle(input, r);
+
+        int[] array = new int[input.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = input.get(i);
+        }
+        if (!Utils.validateInput(array)) {
+            throw new IllegalArgumentException("generated input array is invalid");
+        }
+        return array;
     }
 
     public static Stack<StackObject> getInitialWork(int[] input) {
