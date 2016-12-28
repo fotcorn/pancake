@@ -150,7 +150,26 @@ public class Network {
                         }
                         break;
                     case Network.GIVE_WORK:
-                        // TODO: split stack and send
+                        Stack<StackObject> newStack = new Stack<>();
+                        for (StackObject obj : stack) {
+                            obj.getStack();
+
+                            StackObject newObj = new StackObject(obj.getOperation());
+
+                            Stack<Integer> oStack = obj.getStack();
+                            Stack<Integer> nStack = newObj.getStack();
+
+                            for (int i : oStack.subList(0, oStack.size() / 2)) {
+                                nStack.push(i);
+                            }
+                            oStack.subList(0, oStack.size()).clear();
+
+                            newStack.push(newObj);
+                        }
+
+                        int rank = (Integer)buf[0];
+                        HereIsWorkPackage hereIsWorkPackage = new HereIsWorkPackage(input, newStack, maxDepth, rank);
+                        MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
                         break;
                     case Network.RESTART:
                         return false;
