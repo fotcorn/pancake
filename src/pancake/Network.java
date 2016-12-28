@@ -96,6 +96,11 @@ public class Network {
                     case Network.I_HAVE_FOUND_A_SOLUTION:
                         System.out.printf("M: %s has found a solution\n", status.source);
                         SolutionPackage solutionPackage = (SolutionPackage) buf[0];
+
+                        if (!Utils.validateSolution(input, solutionPackage.solution)) {
+                            throw new IllegalArgumentException("received solution is invalid");
+                        }
+
                         for (int s : solutionPackage.solution) {
                             System.out.println(s);
                         }
