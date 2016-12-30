@@ -180,6 +180,8 @@ public class Network {
                         return false;
                     case Network.SOLUTION_WAS_FOUND:
                         return true;
+                    default:
+                        throw new IllegalArgumentException("Unexpected package received:" + status.tag);
                 }
                 request = irecv(buf);
                 status = request.Test();
