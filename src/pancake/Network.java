@@ -71,7 +71,7 @@ public class Network {
                 System.out.printf("M: received package: %d, %d\n", status.tag, status.source);
                 switch (status.tag) {
                     case Network.I_NEED_WORK:
-                        nodesWithWork.remove(status.source);
+                        nodesWithWork.remove(nodesWithWork.indexOf(status.source));
                         if (nodesWithWork.size() == 0) {
                             int size = MPI.COMM_WORLD.Size();
                             for (int rank = 1; rank < size; rank++) {
