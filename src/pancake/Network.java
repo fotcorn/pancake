@@ -119,9 +119,6 @@ public class Network {
         }
     }
 
-    private static Request irecv(Object[] buf) {
-        return MPI.COMM_WORLD.Irecv(buf, 0, 1, MPI.OBJECT, Network.MASTER, MPI.ANY_TAG);
-    }
 
     private static boolean runSlave() {
         Stack<StackObject> stack = new Stack<>();
@@ -129,14 +126,12 @@ public class Network {
         int[] input = new int[0];
         boolean workRequestSent = false;
 
-        Object[] buf = new Object[1];
 
-        Request request = irecv(buf);
+        NetworkRequest request = new NetworkRequest();
         while (true) {
             Status status;
             if (workRequestSent) {
                 status = request.Wait();
-                request = irecv(buf);
             } else {
                 status = request.Test();
             }
@@ -147,7 +142,7 @@ public class Network {
                         if (!stack.empty()) {
                             throw new IllegalArgumentException("HERE_IS_WORK message received with non-empty stack");
                         } else {
-                            HereIsWorkPackage hereIsWorkPackage = (HereIsWorkPackage) buf[0];
+                            HereIsWorkPackage hereIsWorkPackage = (HereIsWorkPackage) request.buf[0];
                             input = hereIsWorkPackage.input;
                             stack = hereIsWorkPackage.work;
                             maxDepth = hereIsWorkPackage.maxDepth;
@@ -172,7 +167,7 @@ public class Network {
                             newStack.push(newObj);
                         }
 
-                        int rank = (Integer)buf[0];
+                        int rank = (Integer)request.buf[0];
                         HereIsWorkPackage hereIsWorkPackage = new HereIsWorkPackage(input, newStack, maxDepth, rank);
                         MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
                         break;
@@ -183,7 +178,6 @@ public class Network {
                     default:
                         throw new IllegalArgumentException("Unexpected package received:" + status.tag);
                 }
-                request = irecv(buf);
                 status = request.Test();
             }
 
@@ -200,6 +194,33 @@ public class Network {
                 }
             }
         }
+    }
+
+    private static class NetworkRequest {
+
+        private Request request = null;
+        public Object[] buf = new Object[1];
+
+        public Status Test() {
+            if (request == null) {
+                this.request = MPI.COMM_WORLD.Irecv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, MPI.ANY_TAG);
+            }
+            Status status = request.Test();
+            if (status != null) {
+                this.request = null;
+            }
+            return status;
+        }
+
+        public Status Wait() {
+            if (request == null) {
+                this.request = MPI.COMM_WORLD.Irecv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, MPI.ANY_TAG);
+            }
+            Status status = request.Wait();
+            this.request = null;
+            return status;
+        }
+
     }
 
     private static class HereIsWorkPackage implements Serializable {
