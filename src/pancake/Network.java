@@ -48,6 +48,11 @@ public class Network {
         int maxDepth = Utils.gapHeuristic(input);
 
         main_loop: while (true) {
+            System.out.println("-----------------------------");
+            System.out.printf("Start new work with maxDepth %d\n", maxDepth);
+            System.out.println("-----------------------------");
+
+
             Stack<StackObject> initialWork = PancakeNetwork.getInitialWork(input);
 
             Object[] buf = new Object[1];
