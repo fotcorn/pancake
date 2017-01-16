@@ -36,7 +36,12 @@ public class PancakeNetwork {
     }
 
     public static ArrayList<Integer> search(int[] input, Stack<StackObject> stack, int maxDepth) {
+        long start = System.currentTimeMillis();
         while (!stack.empty()) {
+            if (System.currentTimeMillis() - start > 50) {
+                return null;
+            }
+
             StackObject currentStackObject = stack.peek();
             if (currentStackObject.getStack().empty()) {
                 stack.pop();
