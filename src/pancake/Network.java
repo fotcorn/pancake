@@ -95,9 +95,9 @@ public class Network {
                             int size = MPI.COMM_WORLD.Size();
                             for (int rank = 1; rank < size; rank++) {
                                 MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
-                                        rank, Network.RESTART).Wait();
+                                        rank, Network.RESTART);
                             }
-                            System.out.printf("M: sent RESTAR2T message to everyone\n");
+                            System.out.printf("M: sent RESTART message to everyone\n");
                             break networkLoop;
                         }
                         int index = random.nextInt(nodesWithWork.size());
