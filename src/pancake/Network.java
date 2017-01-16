@@ -160,7 +160,7 @@ public class Network {
                 switch (status.tag) {
                     case Network.HERE_IS_WORK:
                         if (!stack.empty()) {
-                            throw new IllegalArgumentException("HERE_IS_WORK message received with non-empty stack");
+                            throw new IllegalArgumentException(String.format("S %d: HERE_IS_WORK message received with non-empty stack", rank));
                         } else {
                             HereIsWorkPackage hereIsWorkPackage = (HereIsWorkPackage) request.buf[0];
                             input = hereIsWorkPackage.input;
