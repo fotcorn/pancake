@@ -102,8 +102,9 @@ public class Network {
                         }
                         int index = random.nextInt(nodesWithWork.size());
                         int rank = nodesWithWork.get(index);
+                        System.out.printf("M: sending GIVE_WORK message to %s\n", rank);
                         MPI.COMM_WORLD.Isend(new Integer[]{new Integer(status.source)}, 0, 1, MPI.OBJECT, rank,
-                                Network.GIVE_WORK).Wait();
+                                Network.GIVE_WORK);
                         System.out.printf("M: sent GIVE_WORK message to %s\n", rank);
                         break;
                     case Network.HERE_IS_WORK:
@@ -185,10 +186,10 @@ public class Network {
 
                             newStack.push(newObj);
                         }
-
                         int destinationRank = (Integer)request.buf[0];
                         HereIsWorkPackage hereIsWorkPackage = new HereIsWorkPackage(input, newStack, maxDepth, destinationRank);
                         MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
+                        System.out.printf("S %d: sent HERE_IS_WORK message to master for %d\n", rank, destinationRank);
                         break;
                     case Network.RESTART:
                         return false;
@@ -201,7 +202,7 @@ public class Network {
             }
 
             if (stack.empty()) {
-                System.out.println("S: sending I_NEED_WORK message");
+                System.out.printf("S %d: sending I_NEED_WORK message\n", rank);
                 MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, Network.MASTER, Network.I_NEED_WORK);
                 workRequestSent = true;
             } else {
