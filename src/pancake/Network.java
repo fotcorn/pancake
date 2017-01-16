@@ -6,6 +6,7 @@ import mpi.Status;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.Stack;
 
@@ -25,7 +26,17 @@ public class Network {
     // Both ways
     private final static int HERE_IS_WORK = 300;
 
+    private static HashMap<Integer, String> packetNames = new HashMap<>();
+
     public static void main(String[] args) {
+        packetNames.put(MASTER, "MASTER");
+        packetNames.put(I_NEED_WORK, "I_NEED_WORK");
+        packetNames.put(I_HAVE_FOUND_A_SOLUTION, "I_HAVE_FOUND_A_SOLUTION");
+        packetNames.put(GIVE_WORK, "GIVE_WORK");
+        packetNames.put(SOLUTION_WAS_FOUND, "SOLUTION_WAS_FOUND");
+        packetNames.put(RESTART, "RESTART");
+        packetNames.put(HERE_IS_WORK, "HERE_IS_WORK");
+
         MPI.Init(args);
         int rank = MPI.COMM_WORLD.Rank();
 
@@ -34,7 +45,7 @@ public class Network {
         } else {
             boolean ret = false;
             while (!ret) {
-                ret = Network.runSlave();
+                ret = Network.runSlave(rank);
             }
         }
         MPI.Finalize();
@@ -73,7 +84,7 @@ public class Network {
 
             networkLoop: while (true) {
                 status = MPI.COMM_WORLD.Recv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, MPI.ANY_TAG);
-                System.out.printf("M: received package: %d, %d\n", status.tag, status.source);
+                System.out.printf("M: received package: %s, %d\n", packetNames.get(status.tag), status.source);
                 switch (status.tag) {
                     case Network.I_NEED_WORK:
                         int i = nodesWithWork.indexOf(status.source);
@@ -86,7 +97,7 @@ public class Network {
                                 MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
                                         rank, Network.RESTART).Wait();
                             }
-                            System.out.printf("M: sent RESTART message to everyone\n");
+                            System.out.printf("M: sent RESTAR2T message to everyone\n");
                             break networkLoop;
                         }
                         int index = random.nextInt(nodesWithWork.size());
@@ -128,7 +139,7 @@ public class Network {
     }
 
 
-    private static boolean runSlave() {
+    private static boolean runSlave(int rank) {
         Stack<StackObject> stack = new Stack<>();
         int maxDepth = 0;
         int[] input = new int[0];
@@ -144,7 +155,7 @@ public class Network {
                 status = request.Test();
             }
             while (status != null) {
-                System.out.printf("S: received package %d\n", status.tag);
+                System.out.printf("S %d: received package %s\n", rank, packetNames.get(status.tag));
                 switch (status.tag) {
                     case Network.HERE_IS_WORK:
                         if (!stack.empty()) {
@@ -175,8 +186,8 @@ public class Network {
                             newStack.push(newObj);
                         }
 
-                        int rank = (Integer)request.buf[0];
-                        HereIsWorkPackage hereIsWorkPackage = new HereIsWorkPackage(input, newStack, maxDepth, rank);
+                        int destinationRank = (Integer)request.buf[0];
+                        HereIsWorkPackage hereIsWorkPackage = new HereIsWorkPackage(input, newStack, maxDepth, destinationRank);
                         MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
                         break;
                     case Network.RESTART:
