@@ -109,6 +109,10 @@ public class Network {
                         break;
                     case Network.HERE_IS_WORK:
                         HereIsWorkPackage hereIsWorkPackage = (HereIsWorkPackage) buf[0];
+                        if (hereIsWorkPackage.maxDepth != maxDepth) {
+                            System.out.println("M: received old HERE_IS_WORK package, not sending it out.");
+                            break;
+                        }
                         MPI.COMM_WORLD.Isend(buf, 0, 1, MPI.OBJECT, hereIsWorkPackage.requestingNode, Network.HERE_IS_WORK);
                         nodesWithWork.add(hereIsWorkPackage.requestingNode);
                         System.out.printf("M: sent HERE_IS_WORK message to %s\n", hereIsWorkPackage.requestingNode);
