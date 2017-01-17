@@ -71,7 +71,7 @@ public class Network {
             System.out.printf("M: Received I_NEED_WORK message from %d\n", status.source);
 
             MPI.COMM_WORLD.Isend(new Object[]{new HereIsWorkPackage(input, initialWork, maxDepth, -1)}, 0, 1, MPI.OBJECT,
-                    status.source, Network.HERE_IS_WORK).Wait();
+                    status.source, Network.HERE_IS_WORK);
             nodesWithWork.add(status.source);
             System.out.println("M: Sent HERE_IS_WORK message\n");
 
@@ -109,7 +109,7 @@ public class Network {
                         break;
                     case Network.HERE_IS_WORK:
                         HereIsWorkPackage hereIsWorkPackage = (HereIsWorkPackage) buf[0];
-                        MPI.COMM_WORLD.Isend(buf, 0, 1, MPI.OBJECT, hereIsWorkPackage.requestingNode, Network.HERE_IS_WORK).Wait();
+                        MPI.COMM_WORLD.Isend(buf, 0, 1, MPI.OBJECT, hereIsWorkPackage.requestingNode, Network.HERE_IS_WORK);
                         nodesWithWork.add(hereIsWorkPackage.requestingNode);
                         System.out.printf("M: sent HERE_IS_WORK message to %s\n", hereIsWorkPackage.requestingNode);
                         break;
@@ -127,7 +127,7 @@ public class Network {
                         int size = MPI.COMM_WORLD.Size();
                         for (int receiver = 1; receiver < size; receiver++) {
                             MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
-                                    receiver, Network.SOLUTION_WAS_FOUND).Wait();
+                                    receiver, Network.SOLUTION_WAS_FOUND);
                         }
 
                         break main_loop;
