@@ -3,17 +3,41 @@ package pancake;
 import java.util.*;
 
 
+
 public class PancakeNetwork {
 
+    public static final int PANCAKE_COUNT = 50;
+
     public static int[] getInput() {
+        return getRandomInput();
+        //return getPairwiseInput();
+    }
+
+    public static int[] getRandomInput() {
         ArrayList<Integer> input = new ArrayList<>();
-        for (int i = 1; i < 50; i++) {
+        for (int i = 1; i < PANCAKE_COUNT; i++) {
             input.add(i);
         }
 
         Random r = new Random(1337);
         Collections.shuffle(input, r);
 
+        int[] array = new int[input.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = input.get(i);
+        }
+        if (!Utils.validateInput(array)) {
+            throw new IllegalArgumentException("generated input array is invalid");
+        }
+        return array;
+    }
+
+    public static int[] getPairwiseInput() {
+        ArrayList<Integer> input = new ArrayList<>();
+        for (int i = 1; i < PANCAKE_COUNT / 2; i += 2) {
+            input.add(i + 1);
+            input.add(i);
+        }
         int[] array = new int[input.size()];
         for (int i = 0; i < array.length; i++) {
             array[i] = input.get(i);
