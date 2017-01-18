@@ -226,9 +226,11 @@ public class Network {
             }
 
             if (stack.empty()) {
-                System.out.printf("S %d: sending I_NEED_WORK message\n", rank);
-                MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, Network.MASTER, Network.I_NEED_WORK);
-                workRequestSent = true;
+                if (!workRequestSent) {
+                    System.out.printf("S %d: sending I_NEED_WORK message\n", rank);
+                    MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, Network.MASTER, Network.I_NEED_WORK);
+                    workRequestSent = true;
+                }
             } else {
                 ArrayList<Integer> solution = PancakeNetwork.search(input, stack, maxDepth);
                 if (solution != null) {
