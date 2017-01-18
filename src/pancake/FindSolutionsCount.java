@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.Stack;
 
-public class Network {
+public class FindSolutionsCount {
 
     private final static int MASTER = 0;
 
@@ -43,11 +43,11 @@ public class Network {
         int rank = MPI.COMM_WORLD.Rank();
 
         if (rank == MASTER) {
-            Network.runMaster();
+            FindSolutionsCount.runMaster();
         } else {
             boolean ret = false;
             while (!ret) {
-                ret = Network.runSlave(rank);
+                ret = FindSolutionsCount.runSlave(rank);
             }
         }
         MPI.Finalize();
@@ -60,6 +60,8 @@ public class Network {
         int[] input = PancakeNetwork.getInput();
         int maxDepth = Utils.gapHeuristic(input);
 
+        int solutionCount = 0;
+
         main_loop: while (true) {
             System.out.println("-----------------------------");
             System.out.printf("Start new work with maxDepth %d\n", maxDepth);
@@ -69,12 +71,12 @@ public class Network {
             Stack<StackObject> initialWork = PancakeNetwork.getInitialWork(input);
 
             Object[] buf = new Object[1];
-            Status status = MPI.COMM_WORLD.Recv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, Network.I_NEED_WORK);
+            Status status = MPI.COMM_WORLD.Recv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, FindSolutionsCount.I_NEED_WORK);
             System.out.printf("M: Received I_NEED_WORK message from %d\n", status.source);
 
             System.out.println("M: Sent HERE_IS_WORK message\n");
             MPI.COMM_WORLD.Isend(new Object[]{new HereIsWorkPackage(input, initialWork, maxDepth, -1)}, 0, 1, MPI.OBJECT,
-                    status.source, Network.HERE_IS_WORK);
+                    status.source, FindSolutionsCount.HERE_IS_WORK);
             nodesWithWork.add(status.source);
 
             try {
@@ -88,52 +90,70 @@ public class Network {
                 status = MPI.COMM_WORLD.Recv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, MPI.ANY_TAG);
                 System.out.printf("M: received package: %s, %d\n", packetNames.get(status.tag), status.source);
                 switch (status.tag) {
-                    case Network.I_NEED_WORK:
+                    case FindSolutionsCount.I_NEED_WORK:
                         int i = nodesWithWork.indexOf(status.source);
                         if (i != -1) {
                             nodesWithWork.remove(i);
                             if (nodesWithWork.size() == 0) {
                                 int size = MPI.COMM_WORLD.Size();
-                                System.out.printf("M: sending RESTART message to everyone\n");
+                                if (solutionCount > 0) {
+                                    System.out.printf("M: sending SOLUTION_WAS_FOUND message to everyone\n");
+                                } else {
+                                    System.out.printf("M: sending RESTART message to everyone\n");
+                                }
                                 for (int rank = 1; rank < size; rank++) {
                                     MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
-                                            rank, Network.RESTART);
+                                            rank, solutionCount == 0 ? FindSolutionsCount.RESTART : FindSolutionsCount.SOLUTION_WAS_FOUND);
                                 }
-                                break networkLoop;
+                                if (solutionCount > 0) {
+                                    System.out.printf("Found %d solutions\n", solutionCount);
+                                    break main_loop;
+                                } else {
+                                    break networkLoop;
+                                }
                             }
                         }
                         int index = random.nextInt(nodesWithWork.size());
                         int rank = nodesWithWork.get(index);
                         System.out.printf("M: sending GIVE_WORK message to %s\n", rank);
                         MPI.COMM_WORLD.Isend(new Integer[]{new Integer(status.source)}, 0, 1, MPI.OBJECT, rank,
-                                Network.GIVE_WORK);
+                                FindSolutionsCount.GIVE_WORK);
                         break;
-                    case Network.NO_WORK_LEFT:
+                    case FindSolutionsCount.NO_WORK_LEFT:
                         i = nodesWithWork.indexOf(status.source);
                         if (i != -1) {
                             nodesWithWork.remove(i);
                             if (nodesWithWork.size() == 0) {
-                                System.out.printf("M: sending RESTART message to everyone\n");
                                 int size = MPI.COMM_WORLD.Size();
+                                if (solutionCount > 0) {
+                                    System.out.printf("M: sending SOLUTION_WAS_FOUND message to everyone\n");
+                                } else {
+                                    System.out.printf("M: sending RESTART message to everyone\n");
+                                }
                                 for (rank = 1; rank < size; rank++) {
                                     MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
-                                            rank, Network.RESTART);
+                                            rank, solutionCount == 0 ? FindSolutionsCount.RESTART : FindSolutionsCount.SOLUTION_WAS_FOUND);
                                 }
-                                break networkLoop;
+                                if (solutionCount > 0) {
+                                    System.out.printf("Found %d solutions\n", solutionCount);
+                                    break main_loop;
+                                } else {
+                                    break networkLoop;
+                                }
                             }
                         }
                         break;
-                    case Network.HERE_IS_WORK:
+                    case FindSolutionsCount.HERE_IS_WORK:
                         HereIsWorkPackage hereIsWorkPackage = (HereIsWorkPackage) buf[0];
                         if (hereIsWorkPackage.maxDepth != maxDepth) {
                             System.out.println("M: received old HERE_IS_WORK package, not sending it out.");
                             break;
                         }
                         System.out.printf("M: sending HERE_IS_WORK message to %s\n", hereIsWorkPackage.requestingNode);
-                        MPI.COMM_WORLD.Isend(buf, 0, 1, MPI.OBJECT, hereIsWorkPackage.requestingNode, Network.HERE_IS_WORK);
+                        MPI.COMM_WORLD.Isend(buf, 0, 1, MPI.OBJECT, hereIsWorkPackage.requestingNode, FindSolutionsCount.HERE_IS_WORK);
                         nodesWithWork.add(hereIsWorkPackage.requestingNode);
                         break;
-                    case Network.I_HAVE_FOUND_A_SOLUTION:
+                    case FindSolutionsCount.I_HAVE_FOUND_A_SOLUTION:
                         System.out.printf("M: %s has found a solution\n", status.source);
                         SolutionPackage solutionPackage = (SolutionPackage) buf[0];
 
@@ -141,16 +161,8 @@ public class Network {
                             throw new IllegalArgumentException("received solution is invalid");
                         }
 
-                        for (int s : solutionPackage.solution) {
-                            System.out.println(s);
-                        }
-                        int size = MPI.COMM_WORLD.Size();
-                        for (int receiver = 1; receiver < size; receiver++) {
-                            MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
-                                    receiver, Network.SOLUTION_WAS_FOUND);
-                        }
-
-                        break main_loop;
+                        solutionCount++;
+                        break;
                     default:
                         throw new IllegalArgumentException("Master: Received illegal package type\n");
                 }
@@ -178,7 +190,7 @@ public class Network {
             while (status != null) {
                 System.out.printf("S %d: received package %s\n", rank, packetNames.get(status.tag));
                 switch (status.tag) {
-                    case Network.HERE_IS_WORK:
+                    case FindSolutionsCount.HERE_IS_WORK:
                         if (!stack.empty()) {
                             throw new IllegalArgumentException(String.format("S %d: HERE_IS_WORK message received with non-empty stack", rank));
                         } else {
@@ -189,9 +201,9 @@ public class Network {
                             workRequestSent = false;
                         }
                         break;
-                    case Network.GIVE_WORK:
+                    case FindSolutionsCount.GIVE_WORK:
                         if (stack.isEmpty()) {
-                            MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, Network.MASTER, Network.NO_WORK_LEFT);
+                            MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, FindSolutionsCount.MASTER, FindSolutionsCount.NO_WORK_LEFT);
                         } else {
                             Stack<StackObject> newStack = new Stack<>();
                             for (StackObject obj : stack) {
@@ -212,12 +224,12 @@ public class Network {
                             int destinationRank = (Integer) request.buf[0];
                             HereIsWorkPackage hereIsWorkPackage = new HereIsWorkPackage(input, newStack, maxDepth, destinationRank);
                             System.out.printf("S %d: sent HERE_IS_WORK message to master for %d\n", rank, destinationRank);
-                            MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
+                            MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, FindSolutionsCount.MASTER, FindSolutionsCount.HERE_IS_WORK);
                         }
                         break;
-                    case Network.RESTART:
+                    case FindSolutionsCount.RESTART:
                         return false;
-                    case Network.SOLUTION_WAS_FOUND:
+                    case FindSolutionsCount.SOLUTION_WAS_FOUND:
                         return true;
                     default:
                         throw new IllegalArgumentException("Unexpected package received:" + status.tag);
@@ -228,15 +240,14 @@ public class Network {
             if (stack.empty()) {
                 if (!workRequestSent) {
                     System.out.printf("S %d: sending I_NEED_WORK message\n", rank);
-                    MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, Network.MASTER, Network.I_NEED_WORK);
+                    MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, FindSolutionsCount.MASTER, FindSolutionsCount.I_NEED_WORK);
                     workRequestSent = true;
                 }
             } else {
                 ArrayList<Integer> solution = PancakeNetwork.search(input, stack, maxDepth);
                 if (solution != null) {
-                    MPI.COMM_WORLD.Send(new Object[]{new SolutionPackage(solution)}, 0, 1, MPI.OBJECT, Network.MASTER,
-                            Network.I_HAVE_FOUND_A_SOLUTION);
-                    return true;
+                    MPI.COMM_WORLD.Send(new Object[]{new SolutionPackage(solution)}, 0, 1, MPI.OBJECT, FindSolutionsCount.MASTER,
+                            FindSolutionsCount.I_HAVE_FOUND_A_SOLUTION);
                 }
             }
         }
