@@ -210,7 +210,7 @@ public class FindSolutionsCount {
                         break;
                     case FindSolutionsCount.GIVE_WORK:
                         if (stack.isEmpty()) {
-                            MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, FindSolutionsCount.MASTER, FindSolutionsCount.NO_WORK_LEFT);
+                            MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, FindSolutionsCount.MASTER, FindSolutionsCount.NO_WORK_LEFT);
                         } else {
                             Stack<StackObject> newStack = new Stack<>();
                             for (StackObject obj : stack) {
@@ -247,7 +247,7 @@ public class FindSolutionsCount {
             if (stack.empty()) {
                 if (!workRequestSent) {
                     System.out.printf("S %d: sending I_NEED_WORK message\n", rank);
-                    MPI.COMM_WORLD.Send(new Object[]{new Integer(maxDepth)}, 0, 1, MPI.OBJECT, FindSolutionsCount.MASTER, FindSolutionsCount.I_NEED_WORK);
+                    MPI.COMM_WORLD.Isend(new Object[]{new Integer(maxDepth)}, 0, 1, MPI.OBJECT, FindSolutionsCount.MASTER, FindSolutionsCount.I_NEED_WORK);
                     workRequestSent = true;
                 }
             } else {
