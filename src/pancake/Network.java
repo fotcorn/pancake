@@ -17,6 +17,7 @@ public class Network {
     // Slave => Master
     private final static int I_NEED_WORK = 100;
     private final static int I_HAVE_FOUND_A_SOLUTION = 101;
+    private final static int NO_WORK_LEFT = 102;
 
     // Master => Slave
     private final static int GIVE_WORK = 200;
@@ -36,6 +37,7 @@ public class Network {
         packetNames.put(SOLUTION_WAS_FOUND, "SOLUTION_WAS_FOUND");
         packetNames.put(RESTART, "RESTART");
         packetNames.put(HERE_IS_WORK, "HERE_IS_WORK");
+        packetNames.put(NO_WORK_LEFT, "NO_WORK_LEFT");
 
         MPI.Init(args);
         int rank = MPI.COMM_WORLD.Rank();
@@ -90,21 +92,36 @@ public class Network {
                         int i = nodesWithWork.indexOf(status.source);
                         if (i != -1) {
                             nodesWithWork.remove(i);
-                        }
-                        if (nodesWithWork.size() == 0) {
-                            int size = MPI.COMM_WORLD.Size();
-                            for (int rank = 1; rank < size; rank++) {
-                                MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
-                                        rank, Network.RESTART);
+                            if (nodesWithWork.size() == 0) {
+                                int size = MPI.COMM_WORLD.Size();
+                                for (int rank = 1; rank < size; rank++) {
+                                    MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
+                                            rank, Network.RESTART);
+                                }
+                                System.out.printf("M: sent RESTART message to everyone\n");
+                                break networkLoop;
                             }
-                            System.out.printf("M: sent RESTART message to everyone\n");
-                            break networkLoop;
                         }
                         int index = random.nextInt(nodesWithWork.size());
                         int rank = nodesWithWork.get(index);
                         MPI.COMM_WORLD.Isend(new Integer[]{new Integer(status.source)}, 0, 1, MPI.OBJECT, rank,
                                 Network.GIVE_WORK);
                         System.out.printf("M: sent GIVE_WORK message to %s\n", rank);
+                        break;
+                    case Network.NO_WORK_LEFT:
+                        i = nodesWithWork.indexOf(status.source);
+                        if (i != -1) {
+                            nodesWithWork.remove(i);
+                            if (nodesWithWork.size() == 0) {
+                                int size = MPI.COMM_WORLD.Size();
+                                for (rank = 1; rank < size; rank++) {
+                                    MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
+                                            rank, Network.RESTART);
+                                }
+                                System.out.printf("M: sent RESTART message to everyone\n");
+                                break networkLoop;
+                            }
+                        }
                         break;
                     case Network.HERE_IS_WORK:
                         HereIsWorkPackage hereIsWorkPackage = (HereIsWorkPackage) buf[0];
@@ -174,28 +191,29 @@ public class Network {
                         break;
                     case Network.GIVE_WORK:
                         if (stack.isEmpty()) {
-                            throw new RuntimeException("No work left to share.");
-                        }
-                        Stack<StackObject> newStack = new Stack<>();
-                        for (StackObject obj : stack) {
-                            obj.getStack();
+                            MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, Network.MASTER, Network.NO_WORK_LEFT);
+                        } else {
+                            Stack<StackObject> newStack = new Stack<>();
+                            for (StackObject obj : stack) {
+                                obj.getStack();
 
-                            StackObject newObj = new StackObject(obj.getOperation());
+                                StackObject newObj = new StackObject(obj.getOperation());
 
-                            Stack<Integer> oStack = obj.getStack();
-                            Stack<Integer> nStack = newObj.getStack();
+                                Stack<Integer> oStack = obj.getStack();
+                                Stack<Integer> nStack = newObj.getStack();
 
-                            for (int i : oStack.subList(0, oStack.size() / 2)) {
-                                nStack.push(i);
+                                for (int i : oStack.subList(0, oStack.size() / 2)) {
+                                    nStack.push(i);
+                                }
+                                oStack.subList(0, oStack.size() / 2).clear();
+
+                                newStack.push(newObj);
                             }
-                            oStack.subList(0, oStack.size() / 2).clear();
-
-                            newStack.push(newObj);
+                            int destinationRank = (Integer) request.buf[0];
+                            HereIsWorkPackage hereIsWorkPackage = new HereIsWorkPackage(input, newStack, maxDepth, destinationRank);
+                            MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
+                            System.out.printf("S %d: sent HERE_IS_WORK message to master for %d\n", rank, destinationRank);
                         }
-                        int destinationRank = (Integer)request.buf[0];
-                        HereIsWorkPackage hereIsWorkPackage = new HereIsWorkPackage(input, newStack, maxDepth, destinationRank);
-                        MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
-                        System.out.printf("S %d: sent HERE_IS_WORK message to master for %d\n", rank, destinationRank);
                         break;
                     case Network.RESTART:
                         return false;
