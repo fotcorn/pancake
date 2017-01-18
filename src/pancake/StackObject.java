@@ -24,4 +24,9 @@ class StackObject implements Serializable {
     public Stack<Integer> getStack() {
         return stack;
     }
+
+    @Override
+    public String toString() {
+        return String.format("[o: %d, %s]\n", this.operation, this.stack);
+    }
 }
