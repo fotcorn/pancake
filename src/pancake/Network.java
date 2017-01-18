@@ -188,7 +188,7 @@ public class Network {
                             for (int i : oStack.subList(0, oStack.size() / 2)) {
                                 nStack.push(i);
                             }
-                            oStack.subList(0, oStack.size()).clear();
+                            oStack.subList(0, oStack.size() / 2).clear();
 
                             newStack.push(newObj);
                         }
