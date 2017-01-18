@@ -72,10 +72,10 @@ public class Network {
             Status status = MPI.COMM_WORLD.Recv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, Network.I_NEED_WORK);
             System.out.printf("M: Received I_NEED_WORK message from %d\n", status.source);
 
+            System.out.println("M: Sent HERE_IS_WORK message\n");
             MPI.COMM_WORLD.Isend(new Object[]{new HereIsWorkPackage(input, initialWork, maxDepth, -1)}, 0, 1, MPI.OBJECT,
                     status.source, Network.HERE_IS_WORK);
             nodesWithWork.add(status.source);
-            System.out.println("M: Sent HERE_IS_WORK message\n");
 
             try {
                 // wait a bit so the first worker has time to build an initial stack
@@ -94,31 +94,31 @@ public class Network {
                             nodesWithWork.remove(i);
                             if (nodesWithWork.size() == 0) {
                                 int size = MPI.COMM_WORLD.Size();
+                                System.out.printf("M: sending RESTART message to everyone\n");
                                 for (int rank = 1; rank < size; rank++) {
                                     MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
                                             rank, Network.RESTART);
                                 }
-                                System.out.printf("M: sent RESTART message to everyone\n");
                                 break networkLoop;
                             }
                         }
                         int index = random.nextInt(nodesWithWork.size());
                         int rank = nodesWithWork.get(index);
+                        System.out.printf("M: sending GIVE_WORK message to %s\n", rank);
                         MPI.COMM_WORLD.Isend(new Integer[]{new Integer(status.source)}, 0, 1, MPI.OBJECT, rank,
                                 Network.GIVE_WORK);
-                        System.out.printf("M: sent GIVE_WORK message to %s\n", rank);
                         break;
                     case Network.NO_WORK_LEFT:
                         i = nodesWithWork.indexOf(status.source);
                         if (i != -1) {
                             nodesWithWork.remove(i);
                             if (nodesWithWork.size() == 0) {
+                                System.out.printf("M: sending RESTART message to everyone\n");
                                 int size = MPI.COMM_WORLD.Size();
                                 for (rank = 1; rank < size; rank++) {
                                     MPI.COMM_WORLD.Isend(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT,
                                             rank, Network.RESTART);
                                 }
-                                System.out.printf("M: sent RESTART message to everyone\n");
                                 break networkLoop;
                             }
                         }
@@ -129,9 +129,9 @@ public class Network {
                             System.out.println("M: received old HERE_IS_WORK package, not sending it out.");
                             break;
                         }
+                        System.out.printf("M: sending HERE_IS_WORK message to %s\n", hereIsWorkPackage.requestingNode);
                         MPI.COMM_WORLD.Isend(buf, 0, 1, MPI.OBJECT, hereIsWorkPackage.requestingNode, Network.HERE_IS_WORK);
                         nodesWithWork.add(hereIsWorkPackage.requestingNode);
-                        System.out.printf("M: sent HERE_IS_WORK message to %s\n", hereIsWorkPackage.requestingNode);
                         break;
                     case Network.I_HAVE_FOUND_A_SOLUTION:
                         System.out.printf("M: %s has found a solution\n", status.source);
@@ -211,8 +211,8 @@ public class Network {
                             }
                             int destinationRank = (Integer) request.buf[0];
                             HereIsWorkPackage hereIsWorkPackage = new HereIsWorkPackage(input, newStack, maxDepth, destinationRank);
-                            MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
                             System.out.printf("S %d: sent HERE_IS_WORK message to master for %d\n", rank, destinationRank);
+                            MPI.COMM_WORLD.Send(new Object[]{hereIsWorkPackage}, 0, 1, MPI.OBJECT, Network.MASTER, Network.HERE_IS_WORK);
                         }
                         break;
                     case Network.RESTART:
