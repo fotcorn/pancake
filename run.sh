@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 export MPJ_HOME=`pwd`/mpj-v0_44/
 cd out/production/mpj/
-$MPJ_HOME/bin/mpjrun.sh -np 4 pancake.FindSolutionsCount
+$MPJ_HOME/bin/mpjrun.sh -np 3 pancake.FindOneSolution

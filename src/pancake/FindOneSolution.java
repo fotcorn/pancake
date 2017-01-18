@@ -69,8 +69,15 @@ public class FindOneSolution {
             Stack<StackObject> initialWork = PancakeNetwork.getInitialWork(input);
 
             Object[] buf = new Object[1];
-            Status status = MPI.COMM_WORLD.Recv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, FindOneSolution.I_NEED_WORK);
-            System.out.printf("M: Received I_NEED_WORK message from %d\n", status.source);
+            Status status;
+            while (true) {
+                status = MPI.COMM_WORLD.Recv(buf, 0, 1, MPI.OBJECT, MPI.ANY_SOURCE, FindOneSolution.I_NEED_WORK);
+                int requestedMaxDepth = (Integer) buf[0];
+                if (requestedMaxDepth == 0) {
+                    System.out.printf("M: Received I_NEED_WORK message from %d\n", status.source);
+                    break;
+                }
+            }
 
             System.out.println("M: Sent HERE_IS_WORK message\n");
             MPI.COMM_WORLD.Isend(new Object[]{new HereIsWorkPackage(input, initialWork, maxDepth, -1)}, 0, 1, MPI.OBJECT,
@@ -228,7 +235,7 @@ public class FindOneSolution {
             if (stack.empty()) {
                 if (!workRequestSent) {
                     System.out.printf("S %d: sending I_NEED_WORK message\n", rank);
-                    MPI.COMM_WORLD.Send(new Object[]{new EmptyPackage()}, 0, 1, MPI.OBJECT, FindOneSolution.MASTER, FindOneSolution.I_NEED_WORK);
+                    MPI.COMM_WORLD.Send(new Object[]{new Integer(maxDepth)}, 0, 1, MPI.OBJECT, FindOneSolution.MASTER, FindOneSolution.I_NEED_WORK);
                     workRequestSent = true;
                 }
             } else {
