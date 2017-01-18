@@ -102,7 +102,6 @@ public class Network {
                         }
                         int index = random.nextInt(nodesWithWork.size());
                         int rank = nodesWithWork.get(index);
-                        System.out.printf("M: sending GIVE_WORK message to %s\n", rank);
                         MPI.COMM_WORLD.Isend(new Integer[]{new Integer(status.source)}, 0, 1, MPI.OBJECT, rank,
                                 Network.GIVE_WORK);
                         System.out.printf("M: sent GIVE_WORK message to %s\n", rank);
