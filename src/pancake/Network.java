@@ -173,6 +173,9 @@ public class Network {
                         }
                         break;
                     case Network.GIVE_WORK:
+                        if (stack.isEmpty()) {
+                            throw new RuntimeException("No work left to share.");
+                        }
                         Stack<StackObject> newStack = new Stack<>();
                         for (StackObject obj : stack) {
                             obj.getStack();
